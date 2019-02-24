@@ -16,10 +16,10 @@ def build_intial(n, net, rules):
     #        1 = 𝑔2(𝑦)
     #        2 = 𝑔3(𝑥)
     #        3 = 𝑔4(𝑥)
-    net[:, 0] = rules[0]
-    net[:, n - 1] = rules[1]
-    net[0, :] = rules[2]
-    net[n - 1, :] = rules[3]
+    net[:, 0] = np.array(rules[0]) - 1
+    net[:, n - 1] = np.array(rules[1]) - 2/np.pi * np.arctan(np.array(rules[1]))
+    net[0, :] = np.array(rules[2])
+    net[n - 1, :] = rules[3] - 2/np.pi * np.array(list(map(lambda x: np.arctan(1/x) if x != 0 else 0, rules[3])))
     return net
 
 
@@ -43,10 +43,10 @@ def bulid_matrix_A_b(m, net):
     for i in range(1, m):
         for j in range(1, m):
             mid = 1
-            east_ind = i + 1, j
-            west_ind = i - 1, j
-            nord_ind = i, j + 1
-            sout_ind = i, j - 1
+            east_ind = i, j + 1
+            west_ind = i, j - 1
+            nord_ind = i + 1, j
+            sout_ind = i - 1, j
 
             A[lin_index(i, j) - 1, lin_index(i, j) - 1] = mid
 
@@ -69,6 +69,7 @@ def bulid_matrix_A_b(m, net):
                 A[lin_index(i, j) - 1, lin_index(*nord_ind) - 1] = -1 / 4
             else:
                 b[lin_index(i, j) - 1] += net[nord_ind] / 4
+
     return A, b
 
 
@@ -121,21 +122,15 @@ if __name__ == '__main__':
 
             gs = []
             for line in lines[1:]:
-                gs.append(line.split())
+                gs.append(list(map(lambda x: float(x),line.split())))
 
             net = build_net(M, gs)
+            print(net)
             A, b = bulid_matrix_A_b(M, net)
-            print(A)
+            print(b)
             x = np.array(list(map(lambda x: 0 if x <= eps else x, solve(A, b, M, eps))))
-            b = np.array([-0.03125, 0., 0.21875, 0., -0.0625, 0., 0.21875, 0., -0.03125])
-            # print(A, '\n', b)
-
-            x = np.array(list(map(lambda x: 0 if x <= eps*10 else x, solve(A, b, M, eps))))
             print(x)
-
             print(lin.solve(A, b))
-            # print(A.dot(solve(A, b, M, eps).T))
-            # print(b)
 
             # plt.imshow(net)
             # plt.show()
